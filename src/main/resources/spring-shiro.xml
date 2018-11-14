@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"></bean>
+    <!-- 数据库保存的密码是使用MD5算法加密的，所以这里需要配置一个密码匹配对象 -->
+    <bean id="credentialsMatcher" class="org.apache.shiro.authc.credential.Md5CredentialsMatcher"></bean>
+    <!-- 缓存管理 -->
+    <bean id="shiroCacheManager" class="org.apache.shiro.cache.MemoryConstrainedCacheManager"></bean>
+	
+	
+    <!--
+    使用Shiro自带的JdbcRealm类
+    指定密码匹配所需要用到的加密对象
+    指定存储用户、角色、权限许可的数据源及相关查询语句
+    -->
+    <bean id="jdbcRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
+         <property name="credentialsMatcher" ref="credentialsMatcher"></property>
+        <property name="permissionsLookupEnabled" value="true"></property>
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="authenticationQuery"
+                  value="SELECT PASSWORD FROM USER WHERE username = ?"></property>
+        <property name="userRolesQuery"
+                  value="SELECT rname FROM USER u,user_role u1,t_role t WHERE u.userid=u1.uid AND u1.rid=t.rid AND u.username = ?"></property>
+        <property name="permissionsQuery"
+                  value="SELECT TEXT FROM t_role t,role_power r,t_power t1 WHERE t.rid=r.rid AND r.pid=t1.id AND t.rname = ?"></property>
+    </bean>
+
+    <!-- Shiro安全管理器 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="jdbcRealm"></property>
+        <property name="cacheManager" ref="shiroCacheManager"></property>
+    </bean>
+	
+	  <!-- 对应于web.xml中配置的那个shiroFilter -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!-- Shiro的核心安全接口，这个属性是必须的 -->
+        <property name="securityManager" ref="securityManager"/>
+        <!-- 要求登录时的链接(登录页面地址)，非必须的属性，默认会自动寻找Web工程根目录下的"/login.jsp"页面 -->
+        <property name="loginUrl" value="/login.do"/>
+        <!-- 登录成功后要跳转的连接(本例中此属性用不到，因为登录成功后的处理逻辑在LoginController里硬编码) -->
+        <!-- <property name="successUrl" value="/" ></property> -->
+        <!-- 用户访问未对其授权的资源时，所显示的连接 -->
+        <property name="unauthorizedUrl" value="/login.do"/>
+        <property name="filterChainDefinitions">
+            <value>
+ 		         /login = anon
+                 /doLogin = anon
+                 /logout = logout
+                admin/**=authc 
+            </value>
+        </property>
+
+    </bean>
+	
+    <!-- Shiro的注解配置一定要放在spring-mvc中 -->
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor"/>  
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">  
+        <property name="securityManager" ref="securityManager"/>  
+    </bean>
+
+</beans>

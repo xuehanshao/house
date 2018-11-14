@@ -1,0 +1,84 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cwb.shiro.dao.ShiDao" >
+
+       <select id="queryZtree" resultType="com.cwb.shiro.model.Tree">
+       
+         select * from t_tree
+       
+       </select>
+       <select id="queryTrees" resultType="com.cwb.shiro.model.Power" parameterType="Integer">
+ 
+        select * from t_tree where pid=#{pid}
+  
+       </select>
+       
+       <select id="queryUserById" resultType="com.cwb.shiro.model.User">
+       
+         select * from user where username = #{username} and password = #{pwd}
+       
+       </select>
+       
+        <select id="queryRelos" resultType="com.cwb.shiro.model.Relo">
+  
+		 select * from t_role
+		  
+		</select>
+		
+		<select id="queryReloById" resultType="com.cwb.shiro.model.Relo">
+ 
+		  SELECT * FROM user_role WHERE uid=#{id}
+		    
+		</select>
+		
+		
+		<delete id="deleRelo" >
+		 
+		  delete from user_role where uid=#{id}
+		 
+		</delete>
+		
+		
+		 <insert id="addRelo">
+		   insert into user_role (uid,rid) values
+			    <foreach collection="rid" item="rid" separator="," >   
+		           (#{0},#{rid})   
+		        </foreach>
+		  
+		 </insert>
+		 
+		 
+		  <select id="queryRelo" resultType="com.cwb.shiro.model.Relo">
+ 
+		   SELECT * FROM user_role u,t_role t WHERE u.rid=t.rid AND u.uid=#{id}
+		 
+		  </select>
+		  
+		  <select id="queryPower" resultType="com.cwb.shiro.model.Power">
+ 
+		   select * from t_power where pid = #{i}
+		 
+		  </select>
+		  
+		   <select id="queryPowerById" resultType="com.cwb.shiro.model.Power">
+  
+		    SELECT * FROM role_power r,t_power t WHERE r.pid=t.id AND r.rid=#{poid}
+		  
+		  </select>
+		  
+		  
+		  <delete id="deletePowerById">
+		   
+		    delete from role_power where rid=#{id}
+		  
+		  </delete>
+		  
+		   <insert id="addPowerById">
+  
+		      insert into role_power (rid,pid) values
+			    <foreach collection="pids" item="pids" separator="," >   
+		           (#{0},#{pids})   
+		        </foreach>
+		   </insert>
+</mapper>  
